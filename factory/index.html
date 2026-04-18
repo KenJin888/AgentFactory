@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="./favicon.ico" />
+    <title>Loading...</title>
+    <style>
+      /* Custom scrollbar for webkit */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+      .typing-cursor::after {
+        content: '▋';
+        animation: blink 1s step-start infinite;
+        color: #3b82f6;
+      }
+      @keyframes blink {
+        50% { opacity: 0; }
+      }
+    </style>
+    <link rel="stylesheet" href="/src/index.css">
+  </head>
+  <body class="bg-gray-50 text-slate-800 font-sans antialiased overflow-hidden">
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

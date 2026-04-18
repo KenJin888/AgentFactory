@@ -1,0 +1,19 @@
+[
+  {
+    "name": "演示智能体",
+    "type": "chat",
+    "visibility_scope": "public",
+    "publish_status": "published",
+    "version_no": 1,
+    "public_agent_id": 0,
+    "config": "{}",
+    "prompt_template":"你是AI助手小李，请认真回答用户的问题。",
+    "model": "{}",
+    "cover": "",
+    "total_usage": 0,
+    "score": 0,
+    "order_no": 1,
+    "status": "0",
+    "description": "演示智能体"
+  }
+]

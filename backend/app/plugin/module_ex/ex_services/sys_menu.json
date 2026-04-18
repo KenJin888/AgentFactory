@@ -1,0 +1,24 @@
+[
+  {
+    "name": "智能体广场",
+    "type": 1,
+    "order": 1,
+    "route_name": "ex_agent",
+    "route_path": "/ex_agent",
+    "title": "智能体广场",
+    "description": "智能体广场",
+    "children": [
+      {
+        "name": "工作台",
+        "type": 2,
+        "order": 1,
+        "permission": "dashboard:workplace:query",
+        "route_name": "Workplace",
+        "route_path": "/dashboard/workplace",
+        "component_path": "dashboard/workplace",
+        "title": "工作台",
+        "description": "初始化数据"
+      }
+    ]
+  }
+]

@@ -1,0 +1,13 @@
+[
+  {
+    "name": "time-mcp",
+    "type": "stdio",
+    "abstract": "获取当前时间。",
+    "category": "开发者工具",
+    "config": "{\n\"mcpServers\": {\n\"time\": {\n\"args\": [\"mcp-server-time\"],\"command\": \"uvx\"\n}\n}\n}",
+    "tools": "",
+    "cover": "",
+    "status": "0",
+    "description": ""
+  }
+]

@@ -1,0 +1,50 @@
+{
+  "name": "agentfactory",
+  "private": true,
+  "version": "0.1.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run --passWithNoTests",
+    "e2e:permission": "node ./test/e2e/permission-e2e.mjs",
+    "e2e:profile": "node ./test/e2e/profile-e2e.mjs",
+    "e2e:profile:watch": "node ./test/e2e/profile-e2e.mjs --slow-mo 800 --finish-pause 3000",
+    "e2e:profile:fast": "node ./test/e2e/profile-e2e.mjs --slow-mo 0 --finish-pause 0",
+    "e2e:profile:launch": "node ./test/e2e/profile-e2e.mjs --browser-mode launch --browser-channel chrome"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.2.8",
+    "@wangeditor-next/editor": "^5.6.56",
+    "@wangeditor-next/editor-for-vue": "^5.1.14",
+    "axios": "^1.13.4",
+    "crypto-js": "^4.2.0",
+    "echarts": "^6.0.0",
+    "lucide-vue-next": "^0.563.0",
+    "markstream-vue": "0.0.8-beta.2",
+    "pinia": "^3.0.4",
+    "qrcode.vue": "^3.5.1",
+    "qs": "^6.14.1",
+    "vue": "^3.5.0",
+    "vue-echarts": "^8.0.1",
+    "vue-router": "^4.4.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/crypto-js": "^4.2.2",
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-vue": "^5.2.0",
+    "@vue/test-utils": "^2.4.6",
+    "autoprefixer": "^10.4.20",
+    "jsdom": "^28.1.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0",
+    "vitest": "^4.0.18",
+    "vue-tsc": "^2.1.0"
+  }
+}

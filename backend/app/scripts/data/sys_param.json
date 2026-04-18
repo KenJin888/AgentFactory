@@ -1,0 +1,91 @@
+[
+  {
+    "config_name": "网站名称",
+    "config_key": "sys_web_title",
+    "config_value": "AgentFactory",
+    "config_type": true,
+    "status": "0",
+    "description": "初始化数据"
+  },
+  {
+    "config_name": "网站标语1",
+    "config_key": "sys_web_slogan1",
+    "config_value": "激活",
+    "config_type": true,
+    "status": "0",
+    "description": "初始化数据"
+  },
+    {
+    "config_name": "网站标语2",
+    "config_key": "sys_web_slogan2",
+    "config_value": "AI生产力",
+    "config_type": true,
+    "status": "0",
+    "description": "初始化数据"
+  },
+
+  {
+    "config_name": "网站描述",
+    "config_key": "sys_web_description",
+    "config_value": "专为智能体设计的企业管理平台",
+    "config_type": true,
+    "status": "0",
+    "description": "初始化数据"
+  },
+  {
+    "config_name": "网页图标",
+    "config_key": "sys_web_favicon",
+    "config_value": "./favicon.ico",
+    "config_type": true,
+    "status": "0",
+    "description": "初始化数据"
+  },
+  {
+    "config_name": "网站Logo",
+    "config_key": "sys_web_logo",
+    "config_value": "/src/assets/logo.png",
+    "config_type": true,
+    "status": "0",
+    "description": "初始化数据"
+  },
+  {
+    "config_name": "版权信息",
+    "config_key": "sys_web_copyright",
+    "config_value": "© 2026 AgentFactory - Designed for agents",
+    "config_type": true,
+    "status": "0",
+    "description": "初始化数据"
+  },
+  {
+    "config_name": "项目版本",
+    "config_key": "sys_web_version",
+    "config_value": "2.0.0",
+    "config_type": true,
+    "status": "0",
+    "description": "初始化数据"
+  },
+  {
+    "config_name": "演示模式启用",
+    "config_key": "demo_enable",
+    "config_value": "false",
+    "config_type": true,
+    "status": "0",
+    "description": "初始化数据"
+  },
+  {
+    "config_name": "演示访问IP白名单",
+    "config_key": "ip_white_list",
+    "config_value": "[\"127.0.0.1\"]",
+    "config_type": true,
+    "status": "0",
+    "description": "初始化数据"
+  },
+  {
+    "config_name": "访问IP黑名单",
+    "config_key": "ip_black_list",
+    "config_value": "[]",
+    "config_type": true,
+    "status": "0",
+    "description": "初始化数据"
+  }
+]

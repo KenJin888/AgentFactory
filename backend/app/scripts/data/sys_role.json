@@ -1,0 +1,18 @@
+[
+  {
+    "name": "管理员",
+    "code": "ADMIN",
+    "status": "0",
+    "order": 1,
+    "data_scope": 4,
+    "description": "管理员角色"
+  },
+  {
+    "name": "用户",
+    "code": "USER",
+    "status": "0",
+    "order": 2,
+    "data_scope": 4,
+    "description": "普通用户角色"
+  }
+]
