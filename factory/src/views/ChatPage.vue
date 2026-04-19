@@ -25,7 +25,7 @@
     <span v-else>{{ currentConversation.title?.[0] || '新' }}</span>
   </div>
               <div>
-                  <h2 class="font-bold text-slate-800 flex items-center gap-2">{{ currentConversation?.title || '新对话' }}</h2>
+                  <h2 class="font-bold text-slate-800 flex items-center gap-2">{{ currentConversation?.title || '新会话' }}</h2>
                   <!-- 模型选择 -->
                   <ModelSelector v-if="currentConversation" v-model="currentModel" mode="dropdown" placement="bottom" class="shrink-0" />
               </div>
@@ -393,10 +393,6 @@ const initData = async () => {
         pageLoading.value = false
         return
       }
-      if (await checkSessionGuard(String(normalizedAgentId))) {
-        pageLoading.value = false
-        return
-      }
 
       const defaultModel = modelProviderStore.getDefaultModel
       const settings = {
@@ -709,9 +705,6 @@ const handleNewChat = async () => {
     const settings = currentConversation.value?.settings || {}
     const settingsRecord = settings as Record<string, unknown>
     const normalizedAgentId = tagsViewStore.normalizeAgentId(settingsRecord.agentId || settingsRecord.agent_id || '0') || '0'
-    if (await checkSessionGuard(normalizedAgentId)) {
-      return
-    }
     // 使用当前会话的配置作为默认配置，如果没有则使用默认
     const nextSettings = {
       ...settings,
@@ -795,11 +788,6 @@ const navigateToExistingSession = async (fullPath: string, removeCurrentTag = fa
   }
 }
 
-const checkSessionGuard = async (agentId: unknown, excludeCurrent = false) => {
-  // “会话页签守卫”，用于在创建/切换会话前做拦截，避免重复页签和超出上限。
-  // 修改为本地打开页签，该功能应该取消？？
-  return false
-}
 
 const syncCurrentSessionTag = async () => {
   const activeConversationId = currentConversation.value?.id || conversationId.value
@@ -850,7 +838,7 @@ const handleSend = async () => {
   const filePayloads = [...uploadFiles.value];
 
   // 如果是第一条消息，更新对话标题
-  if (messages.value.length === 0 && currentConversation.value && userText.trim()) {
+  if (messages.value.filter(message => message.id !== 'welcome-welcome').length === 0 && currentConversation.value && userText.trim()) {
       const newTitle = userText.trim().substring(0, 50);
       currentConversation.value.title = newTitle;
       
