@@ -110,7 +110,7 @@ const chatStore = useChatStore('default')
 const modelProviderStore = useModelProviderStore()
 const tagsViewStore = useTagsViewStore()
 const runtimeStore = useRuntimeStore()
-const appTitle = computed(() => configStore.getConfigValue('sys_web_title', 'StarCityAI'))
+const appTitle = computed(() => configStore.getConfigValue('sys_web_title', 'AgnetFactory'))
 const webLogo = computed(() => configStore.getConfigValue('sys_web_logo', defaultLogo))
 
 // 定义组件属性

@@ -84,8 +84,6 @@ python main.py run --env=dev
 ```
 *(注：如果使用 `uv`，命令为 `uv run main.py run`)*
 
-启动成功后，通常可以通过 `http://127.0.0.1:8000/docs` 访问 Swagger API 接口文档。
-
 ---
 
 ## 🎨 3. 前端项目 (`\factory`)

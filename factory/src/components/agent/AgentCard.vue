@@ -81,7 +81,7 @@
     <div class="mt-6 pt-4 border-t border-gray-50 flex items-center justify-between">
       <div class="flex items-center gap-2">
           <span v-if="agent.visibility_scope === 'public'" class="text-xs text-slate-400 font-medium truncate max-w-[100px]" :title="creatorName">
-              来自：{{ creatorName }}
+              @{{ creatorName }} 创建
           </span>
           <span v-if="agent.visibility_scope === 'public'" class="text-xs text-slate-300 font-medium bg-slate-100 px-1.5 py-0.5 rounded">
               V{{ agent.version_no || 1 }}

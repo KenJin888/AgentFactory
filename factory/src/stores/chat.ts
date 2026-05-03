@@ -35,33 +35,6 @@ export const parseAssistantMessage = (msg: any): MESSAGE => {
   }
 }
 
-const buildUserMessageFiles = (
-    selectedFiles: SelectedUploadFile[]
-): NonNullable<UserMessageContent['files']> => {
-    return selectedFiles.map((selectedFile) => {
-        const file = selectedFile.file
-        const modifiedAt = file ? new Date(file.lastModified || Date.now()) : new Date()
-        return {
-            name: selectedFile.name || file?.name || '文件',
-            mimeType: file?.type || '',
-            token: 0,
-            path: selectedFile.url || '',
-            metadata: {
-                fileName: selectedFile.name || file?.name || '文件',
-                fileSize: file?.size || 0,
-                fileCreated: modifiedAt,
-                fileModified: modifiedAt,
-            }
-        }
-    })
-}
-
-type SelectedUploadFile = {
-  name: string
-  url?: string
-  file?: File
-}
-
 export const useChatStore = (id = 'default') => {
   const storeDef = defineStore(`chat-${id}`, {
     state: () => ({
@@ -76,9 +49,9 @@ export const useChatStore = (id = 'default') => {
       options: { newConversation?: boolean } = {}) {
       try {
         const DEFAULT_CONVERSATION_SETTINGS: Partial<CONVERSATION_SETTINGS> = {
-            systemPrompt: `You are AiWorks, a highly capable AI assistant. Your goal is to fully complete the user’s requested task before handing the conversation back to them. Keep working autonomously until the task is fully resolved.
+            systemPrompt: `You are AiWorks, a highly capable AI assistant. Your goal is to fully complete the user's requested task before handing the conversation back to them. Keep working autonomously until the task is fully resolved.
 Be thorough in gathering information. Before replying, make sure you have all the details necessary to provide a complete solution. Use additional tools or ask clarifying questions when needed, but if you can find the answer on your own, avoid asking the user for help.
-When using tools, briefly describe your intended steps first—for example, which tool you’ll use and for what purpose.
+When using tools, briefly describe your intended steps first—for example, which tool you'll use and for what purpose.
 Adhere to this in all languages.Always respond in the same language as the user's query.`,
             temperature: 0.7,
             contextLength: 4096,
@@ -92,7 +65,7 @@ Adhere to this in all languages.Always respond in the same language as the user'
         if(!normalizedSettings.systemPrompt) {
           normalizedSettings.systemPrompt = DEFAULT_CONVERSATION_SETTINGS.systemPrompt || ''
         }
-        normalizedSettings.enabledMcpToolIds = normalizedSettings.enabledMcpToolIds || []
+        normalizedSettings.externalTools = normalizedSettings.externalTools || []
         const latestConversation = await api.chat.getLatestConversation({ agent_id: agentId })
         if (!options.newConversation) {
           if (latestConversation) {
@@ -115,7 +88,7 @@ Adhere to this in all languages.Always respond in the same language as the user'
       try {
         const res = await api.chat.getMessages(conversationId)
         const rawMessages = res.data?.items || []
-        
+
         this.messages = rawMessages.map((msg: any) => {
           if (msg.role === 'assistant') {
             return parseAssistantMessage(msg)
@@ -150,7 +123,7 @@ Adhere to this in all languages.Always respond in the same language as the user'
 
           const provider = modelProviderStore.llmProviders.find(p => p.id === providerId && p.enable)
           let isValid = false
-          
+
           if (provider && provider.models) {
              isValid = provider.models.some(m => m.id === modelId && m.enabled)
           }
@@ -176,27 +149,47 @@ Adhere to this in all languages.Always respond in the same language as the user'
         throw error
       }
     },
-    async sendMessage(content: UserMessageContent | AssistantMessageBlock[], signal?: AbortSignal, selectedFiles: SelectedUploadFile[] = []) {
-      if (!this.currentConversation?.id) return
-      const files = selectedFiles
-        .map((filePayload) => filePayload.file)
-        .filter((file): file is File => Boolean(file))
-      const messageFiles = buildUserMessageFiles(selectedFiles)
-      const messageText = Array.isArray(content)
-        ? content.map((block) => block.content || '').join('')
-        : content.text || ''
-      const userContent: UserMessageContent = Array.isArray(content)
-        ? {
-          text: messageText,
-          think: false,
-          search: false,
-              files: messageFiles
-        }
-          : {
-              ...content,
-              files: messageFiles.length > 0 ? messageFiles : content.files
-          }
 
+    /**
+     * 发送消息 - 支持多模态内容（文本+文件）
+     * 参考 mcp_chat2 的 usePromptInputFiles 实现
+     * @param content - 用户消息内容（UserMessageContent 格式）
+     * @param signal - 取消信号
+     */
+    async sendMessage(content: UserMessageContent, files: File[] = [], signal?: AbortSignal) {
+      if (!this.currentConversation?.id) return
+
+      // 为所有文件创建本地预览 URL（用于上传时显示）
+      const filePreviewUrls = new Map<string, string>()
+      files.forEach(file => {
+        filePreviewUrls.set(file.name, URL.createObjectURL(file))
+      })
+
+      // 确保 content 是 UserMessageContent 格式（不含 files，文件单独传递）
+      const userContent: UserMessageContent = {
+        text: content.text || '',
+        links: content.links || [],
+        think: content.think || false,
+        search: content.search || false,
+        files: files.map((file) => {
+          const modifiedAt = new Date(file.lastModified || Date.now())
+          return {
+            name: file.name,
+            mimeType: file.type || '',
+            token: 0,
+            // 所有文件都使用本地预览 URL 作为临时路径，后端保存后会返回实际 URL
+            path: filePreviewUrls.get(file.name),
+            metadata: {
+              fileName: file.name,
+              fileSize: file.size,
+              fileCreated: modifiedAt,
+              fileModified: modifiedAt
+            }
+          }
+        })
+      }
+
+      // 创建用户消息
       const tempMsg: MESSAGE = {
         id: Date.now().toString(),
         conversation_id: this.currentConversation.id || '',
@@ -224,7 +217,7 @@ Adhere to this in all languages.Always respond in the same language as the user'
             outputTokens: 0,
             generationTime: 0,
             firstTokenTime: Date.now(),
-            totalTokens: 0, 
+            totalTokens: 0,
             tokensPerSecond: 0,
             contextUsage: 0,
           }
@@ -232,35 +225,56 @@ Adhere to this in all languages.Always respond in the same language as the user'
 
         this.messages = [...this.messages, assistantMsg]
         this.msgLoading = true
+
         const runtimeStore = useRuntimeStore()
         let llmProviderType = "fast"
         if (runtimeStore.runMode === 'Embed') llmProviderType = "deep"
-          const loop = new AgentLoopHandler()
-          const handle = new LLMEventHandler({
-            messages: this.messages,
-            generatingMessage: assistantMsg,
-            onMessageChanged: (msgs: MESSAGE[]) => {
-              this.messages = [...msgs]
-            },
-            onMessageDone: () => {
-              console.log('onMessageDone')
-              this.msgLoading = false
-            },
-            onMessageError: (error: Error) => {
-              console.log('onMessageError', error)
-              this.msgLoading = false
-            }
-          })
-          if(llmProviderType === "deep"){
-            if (signal?.aborted) {
-              this.msgLoading = false
-              return
-            }
-            await loop.startCompletion(llmProviderType, 'test_1', this.currentConversation, this.messages, userContent, files, handle.callback)
+
+        const loop = new AgentLoopHandler()
+        const handle = new LLMEventHandler({
+          messages: this.messages,
+          generatingMessage: assistantMsg,
+          onMessageChanged: (msgs: MESSAGE[]) => {
+            this.messages = [...msgs]
+          },
+          onMessageDone: () => {
+            console.log('onMessageDone')
+            this.msgLoading = false
+          },
+          onMessageError: (error: Error) => {
+            console.log('onMessageError', error)
+            this.msgLoading = false
+          }
+        })
+
+        if(llmProviderType === "deep"){
+          if (signal?.aborted) {
+            this.msgLoading = false
             return
           }
-          const steam = loop.startStreamCompletion(llmProviderType, 'test_1', this.currentConversation, this.messages, userContent, files, signal)
-          handle.consume(steam)
+          // 传递 UserMessageContent 和文件
+          await loop.startCompletion(
+            llmProviderType,
+            'test_1',
+            this.currentConversation,
+            this.messages,
+            userContent,
+            files,
+            handle.callback
+          )
+          return
+        }
+
+        const steam = loop.startStreamCompletion(
+          llmProviderType,
+          'test_1',
+          this.currentConversation,
+          this.messages,
+          userContent,
+          files,
+          signal
+        )
+        handle.consume(steam)
       } catch (e) {
         if (signal?.aborted || (e as any)?.name === 'AbortError') {
           this.msgLoading = false

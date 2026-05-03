@@ -34,15 +34,15 @@ class AISkillsService:
             CustomException: 路径非法时抛出
         """
         cls._ensure_ai_skills_dir()
-        
+
         target_path = AI_SKILLS_DIR.joinpath(name).resolve()
         ai_skills_dir_absolute = AI_SKILLS_DIR.resolve()
-        
+
         if ai_skills_dir_absolute not in target_path.parents and target_path != ai_skills_dir_absolute:
             raise CustomException(msg="非法路径，只能操作AI技能目录内的文件")
-        
+
         return target_path
-    
+
     @classmethod
     def _handle_multilevel_directory(cls, skill_path: Path) -> None:
         """
@@ -53,14 +53,14 @@ class AISkillsService:
         """
         # 查找SKILL.md文件
         skill_md_files = list(skill_path.rglob("SKILL.md"))
-        
+
         if not skill_md_files:
             # 没有找到SKILL.md文件，直接返回
             return
-        
+
         # 获取SKILL.md所在的目录
         skill_md_dir = skill_md_files[0].parent
-        
+
         # 如果SKILL.md不在skill_path根目录，则需要移动内容
         if skill_md_dir != skill_path:
             # 移动skill_md_dir中的所有内容到skill_path
@@ -79,7 +79,7 @@ class AISkillsService:
                         target_item.rmdir()
                 # 移动文件或目录
                 item.rename(target_item)
-            
+
             # 删除空目录
             current_dir = skill_md_dir
             while current_dir != skill_path:
@@ -108,9 +108,9 @@ class AISkillsService:
             if stripped_line.startswith("description:"):
                 description = stripped_line.split(":", 1)[1].strip()
                 if (
-                    len(description) >= 2
-                    and description[0] == description[-1]
-                    and description[0] in {'"', "'"}
+                        len(description) >= 2
+                        and description[0] == description[-1]
+                        and description[0] in {'"', "'"}
                 ):
                     description = description[1:-1]
                 return description
@@ -131,41 +131,41 @@ class AISkillsService:
             操作结果
         """
         skill_path = cls._validate_skill_name(name)
-        
+
         if skill_path.exists():
             raise CustomException(msg="技能已存在")
-        
+
         # 方式1：上传文件夹
         if file and file.filename is None:
             # 处理文件夹上传
             skill_path.mkdir(parents=True, exist_ok=True)
             # 这里需要处理文件夹上传的逻辑，暂时跳过
             return {"message": "技能创建成功"}
-        
+
         # 方式2：上传zip压缩包
         elif file and file.filename and file.filename.endswith('.zip'):
             skill_path.mkdir(parents=True, exist_ok=True)
             content = await file.read()
             zip_path = skill_path.joinpath(f"{name}.zip")
             zip_path.write_bytes(content)
-            
+
             # 解压zip文件
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 zip_ref.extractall(skill_path)
-            
+
             # 删除zip文件
             zip_path.unlink()
-            
+
             # 处理多层目录，定位到SKILL.md所在的层级
             cls._handle_multilevel_directory(skill_path)
-            
+
             return {"message": "技能创建成功"}
-        
+
         # 方式3：通过url下载zip
         elif url:
             skill_path.mkdir(parents=True, exist_ok=True)
             zip_path = skill_path.joinpath(f"{name}.zip")
-            
+
             # 下载zip文件
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as response:
@@ -173,19 +173,19 @@ class AISkillsService:
                         raise CustomException(msg="下载zip文件失败")
                     content = await response.read()
                     zip_path.write_bytes(content)
-            
+
             # 解压zip文件
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 zip_ref.extractall(skill_path)
-            
+
             # 删除zip文件
             zip_path.unlink()
-            
+
             # 处理多层目录，定位到SKILL.md所在的层级
             cls._handle_multilevel_directory(skill_path)
-            
+
             return {"message": "技能创建成功"}
-        
+
         else:
             raise CustomException(msg="请提供文件或url")
 
@@ -201,16 +201,16 @@ class AISkillsService:
             操作结果
         """
         skill_path = cls._validate_skill_name(name)
-        
+
         if not skill_path.exists():
             raise CustomException(msg="技能不存在")
-        
+
         if not skill_path.is_dir():
             raise CustomException(msg="不是有效的技能目录")
-        
+
         # 删除目录
         shutil.rmtree(skill_path)
-        
+
         return {"message": "技能删除成功"}
 
     @classmethod
@@ -225,17 +225,17 @@ class AISkillsService:
             技能详情
         """
         skill_path = cls._validate_skill_name(name)
-        
+
         if not skill_path.exists():
             raise CustomException(msg="技能不存在")
-        
+
         skill_md_path = skill_path.joinpath("SKILL.md")
-        
+
         if not skill_md_path.exists():
             raise CustomException(msg="SKILL.md文件不存在")
-        
+
         content = skill_md_path.read_text(encoding="utf-8")
-        
+
         return {"content": content}
 
     @classmethod
@@ -251,17 +251,17 @@ class AISkillsService:
             操作结果
         """
         skill_path = cls._validate_skill_name(name)
-        
+
         if not skill_path.exists():
             raise CustomException(msg="技能不存在")
-        
+
         skill_md_path = skill_path.joinpath("SKILL.md")
-        
+
         if not skill_md_path.exists():
             raise CustomException(msg="SKILL.md文件不存在")
-        
+
         skill_md_path.write_text(content, encoding="utf-8")
-        
+
         return {"message": "技能更新成功"}
 
     @classmethod
@@ -273,13 +273,37 @@ class AISkillsService:
             技能列表
         """
         cls._ensure_ai_skills_dir()
-        
+
         skills = []
         descriptions = []
-        
+
         for item in AI_SKILLS_DIR.iterdir():
             if item.is_dir():
                 skill_md_path = item.joinpath("SKILL.md")
                 skills.append({"name": item.name, "description": cls._get_skill_description(skill_md_path)})
-        
+
         return {"skills": skills}
+
+
+async def get_skills(force_refresh, redis) -> dict[str, list]:
+    from app.core.redis_crud import RedisCURD
+    from app.core.logger import log
+    import json
+    cache_key = "ai_skills_list"
+    redis_crud = RedisCURD(redis)
+    # 检查缓存是否有效（5分钟内）
+    if not force_refresh:
+        cached_data = await redis_crud.get(cache_key)
+        if cached_data:
+
+            try:
+                result_dict = json.loads(cached_data)
+                log.info("使用缓存的统计数据")
+                return result_dict
+            except json.JSONDecodeError:
+                log.error("解析缓存数据失败")
+    # 获取最新统计数据
+    result = AISkillsService.list_skills()
+    # 更新缓存，设置5分钟过期
+    await redis_crud.set(cache_key, result, expire=600)
+    return result

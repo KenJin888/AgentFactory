@@ -1,10 +1,10 @@
 [
   {
-    "name": "time-mcp",
-    "type": "stdio",
-    "abstract": "获取当前时间。",
+    "name": "mcp-time",
+    "type": "sse",
+    "abstract": "This service can provide the current time based on a specified timezone. It can also determine the user's location through their IP address, and then provide the accurate time based on the timezone of that location.",
     "category": "开发者工具",
-    "config": "{\n\"mcpServers\": {\n\"time\": {\n\"args\": [\"mcp-server-time\"],\"command\": \"uvx\"\n}\n}\n}",
+    "config": "{\n  \"mcpServers\": {\n    \"mcp-time\": {\n      \"url\": \"https://mcp.higress.ai/mcp-time/cmih1nyxj00709d01yipq8mww/sse\"\n    }\n  }\n}",
     "tools": "",
     "cover": "",
     "status": "0",

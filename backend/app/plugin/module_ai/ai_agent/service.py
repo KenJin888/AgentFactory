@@ -9,6 +9,7 @@ from fastapi import UploadFile
 from sqlalchemy import asc, desc, exists, func, or_, select
 
 from app.api.v1.module_system.auth.schema import AuthSchema
+from app.config.setting import settings
 from app.core.base_schema import BatchSetAvailable
 from app.core.exceptions import CustomException
 from app.core.logger import log
@@ -324,6 +325,9 @@ class AiAgentService:
             page: int = 1,
             page_size: int = 200,
     ) -> list[dict]:
+        if not str(settings.RAGFLOW_API_BASE or "").strip():
+            return []
+
         from app.plugin.module_ai.ai_ragflow.service import AiRagflowService
 
         datasets_result = await AiRagflowService.list_datasets_service(auth=auth, page=page, page_size=page_size)
@@ -512,7 +516,7 @@ class AiAgentService:
             search = {
                 "name": ("eq", name),
                 "visibility_scope": cls._VISIBILITY_PUBLIC,
-                "publish_status": ("!=", cls._PUBLISH_DELETED),
+                "publish_status": ("!=", cls._PUBLISH_OFFLINE),
             }
             if exclude_id is not None:
                 search["id"] = ("!=", exclude_id)

@@ -23,6 +23,7 @@ from app.plugin.module_ai.ai_mcp.crud import AiMcpCRUD
 from app.plugin.module_ai.ai_mcp.schema import AiMcpOutSchema
 from .crud import AiChatCRUD
 from .file_markdown import extract_upload_file_markdowns
+from .file_processor import ai_chat_file_processor
 from .model import AiChatModel
 from .schema import (
     AiChatCompletionSchema,
@@ -45,7 +46,12 @@ class AiChatService:
     async def resolve_chat_completion_request_service(
             cls,
             request: Request,
-    ) -> tuple[AiChatCompletionSchema, list[dict[str, str]]]:
+    ) -> tuple[AiChatCompletionSchema, list[dict[str, Any]]]:
+        """
+        解析聊天完成请求
+
+        支持文件上传，使用新的文件解析器处理各种文件类型。
+        """
         payload, files = await cls._parse_chat_completion_request(request)
         payload = cls._normalize_completion_payload(payload=payload, files=files)
 
@@ -58,11 +64,18 @@ class AiChatService:
                 data=payload,
             ) from exc
 
+        # 验证并处理上传的文件
         cls._validate_upload_files(files)
-        file_markdowns = await extract_upload_file_markdowns(
-            files=files,
-            max_file_size_bytes=settings.AI_CHAT_UPLOAD_MAX_FILE_SIZE,
-        )
+
+        # 使用新的文件处理器处理文件
+        processed_files = await ai_chat_file_processor.process_upload_files(files)
+
+        # 兼容旧格式，同时返回markdown格式
+        file_markdowns = [
+            {"name": f.get("name", ""), "markdown": f.get("content", "")}
+            for f in processed_files
+        ]
+
         return data, file_markdowns
 
     @classmethod
@@ -498,7 +511,14 @@ class AiChatService:
                     file_name = str(item.get("name") or f"文件{index}").strip()
                     if not file_name:
                         continue
-                    file_sections.append(f"【用户上传文件{index}】{file_name}")
+                    file_content = str(item.get("content") or "").strip()
+                    if file_content:
+                        file_sections.append(
+                            f"【用户上传文件{index}】{file_name}\n"
+                            f"```\n{cls._truncate_file_content(file_content)}\n```"
+                        )
+                    else:
+                        file_sections.append(f"【用户上传文件{index}】{file_name}")
 
             content_text = ""
             content = payload.get("content")
@@ -516,6 +536,12 @@ class AiChatService:
             return "\n\n".join(result_parts).strip()
 
         return ""
+
+    @staticmethod
+    def _truncate_file_content(content: str, max_chars: int = 8000) -> str:
+        if len(content) <= max_chars:
+            return content
+        return content[:max_chars] + "\n...(内容已截断)"
 
     @classmethod
     def _extract_assistant_message_text(cls, payload: object | list | str) -> str:
@@ -563,29 +589,29 @@ class AiChatService:
         return "\n".join(part for part in text_parts if part).strip()
 
     @classmethod
-    async def get_enabled_mcp_configs(cls, auth: AuthSchema, ids: list[int] | None) -> list[dict]:
-        clean_ids = cls._deduplicate_int_list(ids)
-        if not clean_ids:
+    async def get_enabled_mcp_configs(cls, auth: AuthSchema, names: list[str] | None) -> list[dict]:
+        clean_names = cls._deduplicate_str_list(names)
+        if not clean_names:
             return []
 
         mcp_list = await AiMcpCRUD(auth).list_ai_mcp_crud(
             search={
-                "id": ("in", clean_ids),
+                "name": ("in", clean_names),
                 "status": "0",
             },
-            order_by=[{"id": "asc"}],
+            order_by=[{"name": "asc"}],
         )
         mcp_map = {
-            int(item.id): AiMcpOutSchema.model_validate(item).model_dump()
+            str(item.name): AiMcpOutSchema.model_validate(item).model_dump()
             for item in mcp_list
-            if item.id is not None
+            if item.name
         }
 
-        missing_ids = [str(mcp_id) for mcp_id in clean_ids if mcp_id not in mcp_map]
-        if missing_ids:
-            log.warning(f"以下MCP未找到或未启用，已跳过: {','.join(missing_ids)}")
+        missing_names = [mcp_name for mcp_name in clean_names if mcp_name not in mcp_map]
+        if missing_names:
+            log.warning(f"以下MCP未找到或未启用，已跳过: {','.join(missing_names)}")
 
-        return [mcp_map[mcp_id] for mcp_id in clean_ids if mcp_id in mcp_map]
+        return [mcp_map[mcp_name] for mcp_name in clean_names if mcp_name in mcp_map]
 
     @classmethod
     def build_builtin_ragflow_mcp_config(cls) -> dict[str, Any]:

@@ -1,12 +1,12 @@
-import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
+import {createRouter, createWebHashHistory, type RouteRecordRaw, RouterView} from 'vue-router'
 import Login from '../views/Login.vue'
 import Layout from '../components/Layout.vue'
 import Agent from '../views/Agent.vue'
 import MySpace from '../views/MySpace.vue'
 import ChatPage from '../views/ChatPage.vue'
 import Profile from '../views/Profile.vue'
-import { useUserStore } from '@/stores/user'
-import { usePermissionStore } from '@/stores/permission'
+import {useUserStore} from '@/stores/user'
+import {usePermissionStore} from '@/stores/permission'
 
 const AGENT_ENTRY_STORAGE_KEY = 'agent_entry_id'
 const CATCH_ALL_ROUTE_PATH = '/:pathMatch(.*)*'
@@ -68,14 +68,6 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: {
           title: '智能体广场',
           icon: 'layout-grid'
-        }
-      },
-      {
-        path: 'oh',
-        name: 'OpenHarness',
-        component: () => import('../views/OpenHarness.vue'),
-        meta: {
-          title: 'OpenHarness'
         }
       },
       {
@@ -201,14 +193,15 @@ router.beforeEach(async (to, _from, next) => {
   }
 
   const token = userStore.token;
-  if (token && to.path === '/login') {
-    next({ path: '/', replace: true })
+  if (token && (to.path === '/login' || to.path === '/mobile/login')) {
+    next({ path: to.path.startsWith('/mobile') ? '/mobile' : '/', replace: true })
     return
   }
   if (to.meta.requiresAuth && !token) {
     permissionStore.resetRouter()
+    const isMobile = to.path.startsWith('/mobile')
     next({
-      path: '/login',
+      path: isMobile ? '/mobile/login' : '/login',
       query: {
         redirect: to.fullPath
       }

@@ -200,7 +200,7 @@ export class LLMEventHandler {
     if (conversationId > 0 && content) {
       const metadata = message.metadata
       try {
-        await AiChatAPI.saveChatCompletions({
+        AiChatAPI.saveChatCompletions({
           conversation_id: conversationId,
           role: message.role,
           content,

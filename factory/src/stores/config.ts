@@ -1,7 +1,7 @@
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
-import { api } from '@/services/api'
-import type { ConfigTable } from '@/services/fastApi/module_system/params'
+import {ref} from 'vue'
+import {defineStore} from 'pinia'
+import {api} from '@/services/api'
+import type {ConfigTable} from '@/services/fastApi/module_system/params'
 
 export type ConfigKey =
   | 'sys_web_title'
@@ -64,7 +64,17 @@ export const useConfigStore = defineStore('config', () => {
   }
 
   const getConfigValue = (key: ConfigKey, fallback = ''): string => {
-    return configData.value[key]?.config_value || fallback
+    const value = configData.value[key]?.config_value
+
+    if (!value) {
+      return fallback
+    }
+
+    if (fallback && /^\/?src\/assets\//.test(value)) {
+      return fallback
+    }
+
+    return value
   }
 
   return {

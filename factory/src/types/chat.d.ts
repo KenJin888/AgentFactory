@@ -6,7 +6,7 @@ export type CONVERSATION_SETTINGS = {
    providerId?: string 
    modelId?: string 
    artifacts?: 0 | 1
-    enabledMcpToolIds?: number[]
+   externalTools?: string[]
    thinkingBudget?: number 
    enableSearch?: boolean 
    forcedSearch?: boolean 
@@ -156,16 +156,51 @@ export type MessageFile = {
   thumbnail?: string
 }
 
+// 与 LLM API 交互的多模态内容格式
+export type ChatMessageContentText = {
+  type: 'text'
+  text: string
+}
+
+export type ChatMessageContentImageUrl = {
+  type: 'image_url'
+  image_url: {
+    url: string
+    detail?: 'auto' | 'low' | 'high'
+  }
+}
+
+export type ChatMessageContent = ChatMessageContentText | ChatMessageContentImageUrl
+
+// 用户输入内容块类型
+export type UserMessageTextBlock = {
+  type: 'text'
+  content: string
+}
+
+export type UserMessageCodeBlock = {
+  type: 'code'
+  content: string
+  language: string
+}
+
+export type UserMessageMentionBlock = {
+  type: 'mention'
+  content: string
+  id: string
+  category: string
+}
+
 export type UserMessageContent = {
   think?: boolean
   search?: boolean
   text: string
   continue?: boolean
-  files?:MessageFile[]
+  files?: MessageFile[] // 文件列表，包含图片（通过 mimeType 区分）
   resources?: any[] // ResourceListEntryWithClient[]
   prompts?: any[] // PromptWithClient[]
   links?: string[]
-  content?: any //  (UserMessageTextBlock | UserMessageMentionBlock | UserMessageCodeBlock)[]
+  content?: (UserMessageTextBlock | UserMessageMentionBlock | UserMessageCodeBlock)[]
 }
 
 // MCP related type definitions

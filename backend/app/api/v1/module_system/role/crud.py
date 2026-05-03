@@ -66,12 +66,18 @@ class RoleCRUD(CRUDBase[RoleModel, RoleCreateSchema, RoleUpdateSchema]):
         - None
         """
         roles = await self.list(search={"id": ("in", role_ids)})
-        menus = await MenuCRUD(self.auth).get_list_crud(search={"id": ("in", menu_ids)})
 
-        for obj in roles:
-            relationship = obj.menus
-            relationship.clear()
-            relationship.extend(menus)
+        # 如果 menu_ids 为空列表，则清空所有角色的菜单权限
+        if not menu_ids:
+            for obj in roles:
+                relationship = obj.menus
+                relationship.clear()
+        else:
+            menus = await MenuCRUD(self.auth).get_list_crud(search={"id": ("in", menu_ids)})
+            for obj in roles:
+                relationship = obj.menus
+                relationship.clear()
+                relationship.extend(menus)
         await self.auth.db.flush()
 
     async def set_role_data_scope_crud(self, role_ids: list[int], data_scope: int) -> None:
@@ -99,12 +105,18 @@ class RoleCRUD(CRUDBase[RoleModel, RoleCreateSchema, RoleUpdateSchema]):
         - None
         """
         roles = await self.list(search={"id": ("in", role_ids)})
-        depts = await DeptCRUD(self.auth).get_list_crud(search={"id": ("in", dept_ids)})
 
-        for obj in roles:
-            relationship = obj.depts
-            relationship.clear()
-            relationship.extend(depts)
+        # 如果 dept_ids 为空列表，则清空所有角色的部门权限
+        if not dept_ids:
+            for obj in roles:
+                relationship = obj.depts
+                relationship.clear()
+        else:
+            depts = await DeptCRUD(self.auth).get_list_crud(search={"id": ("in", dept_ids)})
+            for obj in roles:
+                relationship = obj.depts
+                relationship.clear()
+                relationship.extend(depts)
         await self.auth.db.flush()
 
     async def set_available_crud(self, ids: list[int], status: str) -> None:

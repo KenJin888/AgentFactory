@@ -2,7 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useRouter } from 'vue-router'
 
-export const MAX_SESSION_TABS = 3
+export const MAX_SESSION_TABS = 12
 const CHAT_PAGE_NAME = 'ChatPage'
 
 type SessionTabGuardResult =

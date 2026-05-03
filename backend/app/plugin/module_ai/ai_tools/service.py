@@ -4,6 +4,9 @@ from typing import Any, Dict, Optional, List
 from agno.tools import Toolkit
 from agno.tools.function import Function
 
+from app.core.logger import log
+from app.core.redis_crud import RedisCURD
+from app.plugin.module_ai.ai_tools.config import base_tool_list
 from openharness.tools.base import BaseTool, ToolExecutionContext, ToolResult
 
 
@@ -73,6 +76,7 @@ class AIToolsService:
             tools: List[BaseTool],
             cwd: Path,
             toolkit_name: str = "openharness_tools",
+            metadata: Optional[Dict[str, Any]] = None,
     ) -> Toolkit:
         """
         批量将多个 openharness 工具转换并打包成一个 agno Toolkit。
@@ -81,13 +85,21 @@ class AIToolsService:
             tools: openharness 工具实例列表
             cwd: 所有工具共享的当前工作目录
             toolkit_name: Toolkit 的名称
+            metadata: 额外上下文元数据（可选，如 auth 信息）
 
         Returns:
             包含所有转换后工具的 agno Toolkit
         """
         toolkit = Toolkit(name=toolkit_name, auto_register=False)
         for tool in tools:
-            agno_func = cls.adapt_openharness_tool(tool, cwd)
+            tool_metadata = metadata.copy() if metadata else {}
+            if tool.name == 'ask_user_question':
+                tool_metadata["ask_user_prompt"] = terminal_prompt
+            agno_func = cls.adapt_openharness_tool(
+                tool=tool,
+                cwd=cwd,
+                metadata=tool_metadata
+            )
             toolkit.register(agno_func)
         return toolkit
 
@@ -99,8 +111,8 @@ class AIToolsService:
            工具字典
        """
         tools_map = {}
-        base_tool_list = BaseTool.__subclasses__()
-        for tool_cls in base_tool_list:
+        tool_list = base_tool_list
+        for tool_cls in tool_list:
             try:
                 tool = tool_cls()
                 tools_map[tool.name] = tool
@@ -119,11 +131,39 @@ class AIToolsService:
         """
 
         tools = []
-        base_tool_list = BaseTool.__subclasses__()
-        for tool_cls in base_tool_list:
+        tool_list = base_tool_list
+        for tool_cls in tool_list:
             try:
                 tools.append({"name": tool_cls().name, "description": tool_cls().description})
             except:
                 print('异常:%s' % tool_cls)
 
         return {"tools": tools}
+
+
+async def terminal_prompt(question: str) -> str:
+    print(question)
+    return "1"
+    # return await asyncio.to_thread(input, f"{question}\n> ")
+
+
+async def get_tools(force_refresh, redis) -> dict[str, list]:
+    cache_key = "ai_tools_list"
+    redis_crud = RedisCURD(redis)
+    # 检查缓存是否有效（5分钟内）
+    if not force_refresh:
+        cached_data = await redis_crud.get(cache_key)
+        if cached_data:
+            import json
+            try:
+                result_dict = json.loads(cached_data)
+                log.info("使用缓存的统计数据")
+                return result_dict
+            except json.JSONDecodeError:
+                log.error("解析缓存数据失败")
+    # 获取最新统计数据
+    result = AIToolsService.list_tools()
+    # 更新缓存，设置5分钟过期
+    await redis_crud.set(cache_key, result, expire=600)
+    log.info("列出工具列表成功")
+    return result

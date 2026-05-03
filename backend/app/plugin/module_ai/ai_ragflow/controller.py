@@ -98,7 +98,7 @@ async def list_datasets(
 )
 async def create_dataset(
         payload: Dict[str, Any] = Body(...),
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:create"])),
 ):
     try:
         return await AiRagflowService.create_dataset_service(auth=auth, payload=payload)
@@ -120,7 +120,7 @@ async def create_dataset(
 )
 async def delete_datasets(
         payload: Dict[str, Any] = Body(...),
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:delete"])),
 ):
     try:
         return await AiRagflowService.delete_datasets_service(auth=auth, payload=payload)
@@ -143,7 +143,7 @@ async def delete_datasets(
 async def update_dataset(
         dataset_id: str,
         payload: Dict[str, Any] = Body(...),
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:update"])),
 ):
     try:
         return await AiRagflowService.update_dataset_service(auth=auth, dataset_id=dataset_id, payload=payload)
@@ -166,7 +166,7 @@ async def update_dataset(
 async def upload_documents(
         dataset_id: str,
         file: List[UploadFile] = File(...),
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:update"])),
 ):
     try:
         return await AiRagflowService.upload_documents_service(auth=auth, dataset_id=dataset_id, files=file)
@@ -190,7 +190,7 @@ async def update_document(
         dataset_id: str,
         document_id: str,
         payload: Dict[str, Any] = Body(...),
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:update"])),
 ):
     try:
         return await AiRagflowService.update_document_service(
@@ -217,7 +217,7 @@ async def update_document(
 async def download_document(
         dataset_id: str,
         document_id: str,
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:query"])),
 ):
     try:
         result = await AiRagflowService.download_document_service(
@@ -256,7 +256,7 @@ async def list_documents(
                     "不传则返回全部状态。"
             ),
         ),
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:query"])),
 ):
     try:
         return await AiRagflowService.list_documents_service(
@@ -285,7 +285,7 @@ async def list_documents(
 async def delete_documents(
         dataset_id: str,
         payload: Dict[str, Any] = Body(...),
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:delete"])),
 ):
     try:
         return await AiRagflowService.delete_documents_service(auth=auth, dataset_id=dataset_id, payload=payload)
@@ -308,7 +308,7 @@ async def delete_documents(
 async def parse_documents(
         dataset_id: str,
         payload: Dict[str, Any] = Body(...),
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:update"])),
 ):
     try:
         return await AiRagflowService.parse_documents_service(auth=auth, dataset_id=dataset_id, payload=payload)
@@ -331,7 +331,7 @@ async def parse_documents(
 async def stop_parsing_documents(
         dataset_id: str,
         payload: Dict[str, Any] = Body(...),
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:update"])),
 ):
     try:
         return await AiRagflowService.stop_parsing_documents_service(
@@ -359,7 +359,7 @@ async def add_chunk(
         dataset_id: str,
         document_id: str,
         payload: Dict[str, Any] = Body(...),
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:update"])),
 ):
     try:
         return await AiRagflowService.add_chunk_service(
@@ -391,7 +391,7 @@ async def list_chunks(
         page: int = 1,
         page_size: int = 1024,
         chunk_id: Optional[str] = Query(default=None, alias="id"),
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:query"])),
 ):
     try:
         return await AiRagflowService.list_chunks_service(
@@ -423,7 +423,7 @@ async def delete_chunks(
         dataset_id: str,
         document_id: str,
         payload: Dict[str, Any] = Body(...),
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:update"])),
 ):
     try:
         return await AiRagflowService.delete_chunks_service(
@@ -453,7 +453,7 @@ async def update_chunk(
         document_id: str,
         chunk_id: str,
         payload: Dict[str, Any] = Body(...),
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:update"])),
 ):
     try:
         return await AiRagflowService.update_chunk_service(
@@ -482,7 +482,7 @@ async def update_chunk(
 )
 async def retrieve_chunks(
         payload: RetrieveChunksPayload = Body(...),
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:query"])),
 ):
     try:
         return await AiRagflowService.retrieve_chunks_service(
@@ -507,7 +507,7 @@ async def retrieve_chunks(
 )
 async def list_dataset_auth_rules(
         dataset_id: str,
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:query"])),
 ):
     try:
         return AiDatasetAuthRulesResponse(
@@ -532,7 +532,7 @@ async def list_dataset_auth_rules(
 async def update_dataset_auth_rules(
         dataset_id: str,
         payload: AiDatasetAuthRulesPayload = Body(...),
-        auth: AuthSchema = Depends(AuthPermission()),
+        auth: AuthSchema = Depends(AuthPermission(["module_ai:ai_ragflow:update"])),
 ):
     try:
         return AiDatasetAuthRulesResponse(

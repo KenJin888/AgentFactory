@@ -211,9 +211,8 @@ class Settings(BaseSettings):
 
     # RAGFlow
     RAGFLOW_API_KEY: str = "ragflow-"
-    RAGFLOW_API_BASE: str = "http://192.168.168.182/api/v1"
+    RAGFLOW_API_BASE: str = ""
     RAGFLOW_TIMEOUT: int = 30
-
 
     # ================================================= #
     # ******************* AI聊天上传配置 ****************** #

@@ -17,8 +17,7 @@ from mcp import StdioServerParameters
 from app.config.path_conf import AI_SKILLS_DIR, AI_FILE_DIR
 from app.core.logger import log
 from app.plugin.module_ai.agno.model_map import create_model
-from app.plugin.module_ai.agno.output_schema import resolve_output_schema
-from app.plugin.module_ai.ai_knowledge_base.service import FilesService
+from app.plugin.module_ai.ai_knowledge_base.service import FilesService, get_file_dir
 from app.plugin.module_ai.ai_tools.service import AIToolsService
 
 
@@ -56,6 +55,7 @@ class AgnoProvider:
             authorization: str | None = None,
             mcp_extra_headers: dict[str, str] | None = None,
             response_schema: dict[str, Any] | None = None,
+            auth: Any = None,
     ) -> AsyncGenerator[dict[str, Any], Any]:
         """
         处理查询并返回流式响应
@@ -79,10 +79,19 @@ class AgnoProvider:
             finish_reason=None,
         )
         normalized_query = self._normalize_query(query)
-        output_schema = resolve_output_schema(response_schema)
+        # output_schema = resolve_output_schema(response_schema)
 
-        tools = self._get_mcp_tools(mcp_configs, authorization=authorization, extra_headers=mcp_extra_headers)
-        tools += self._get_tools(internal_tools, conversation_id)
+        mcp_tools = self._get_mcp_tools(mcp_configs, authorization=authorization, extra_headers=mcp_extra_headers)
+        requested_internal_tools = list(internal_tools or [])
+        log.info(
+            f"工具准备中: mcp_configs={len(mcp_configs or [])}, mcp_tools={len(mcp_tools)}, "
+            f"internal_tools={requested_internal_tools}"
+        )
+        tools = mcp_tools + self._get_tools(internal_tools, conversation_id, auth=auth)
+        log.info(
+            f"工具准备完成: total_tools={len(tools)}, mcp_tools={len(mcp_tools)}, "
+            f"internal_toolkits={len(tools) - len(mcp_tools)}"
+        )
 
         agent = Agent(
             model=self.model,
@@ -94,12 +103,12 @@ class AgnoProvider:
             markdown=True,
             tools=tools,
             skills=self._get_skills(active_skills),
-            output_schema=output_schema,
+            # output_schema=output_schema,
         )
         try:
             async for chunk in agent.arun(normalized_query,
                                           stream_events=True, stream=True, show_full_reasoning=True):
-                if chunk.event == RunEvent.reasoning_content_delta:
+                if chunk.event == RunEvent.run_content and chunk.reasoning_content:
                     content = chunk.reasoning_content or ""
                     if not content:
                         continue
@@ -372,11 +381,18 @@ class AgnoProvider:
             args = server_config.get("args")
             env = server_config.get("env")
             cwd = server_config.get("cwd")
+            command_text = str(command).strip()
+            args_list = cls._get_args(args)
+            cwd_path = str(cwd).strip() if cwd else None
+            log.info(
+                f"初始化MCP(stdio): server={server_name}, command={command_text}, args={args_list}, "
+                f"cwd={cwd_path}, timeout={timeout_seconds}s"
+            )
             server_params = StdioServerParameters(
-                command=str(command).strip(),
-                args=cls._get_args(args),
+                command=command_text,
+                args=args_list,
                 env=cls._get_env(env),
-                cwd=str(cwd).strip() if cwd else None,
+                cwd=cwd_path,
             )
             return MCPTools(
                 transport="stdio",
@@ -416,20 +432,27 @@ class AgnoProvider:
         return Skills(loaders=loaders)
 
     @classmethod
-    def _get_tools(cls, tools_configs: Sequence[str] | None, conversation_id) -> Toolkit | None:
+    def _get_tools(cls, tools_configs: Sequence[str] | None, conversation_id, auth: Any = None) -> Toolkit | None:
         if not tools_configs:
             return []
         tools_map = AIToolsService.map_tools()
+        requested_tools = list(tools_configs)
+        missing_tools = [tool_name for tool_name in requested_tools if tool_name not in tools_map]
+        if missing_tools:
+            log.warning(f"请求的内部工具不存在，已跳过: {missing_tools}")
+        log.info(f"加载内部工具: requested={requested_tools}, available={list(tools_map.keys())}")
         tools = []
         for t in tools_configs:
             if tools_map.get(t):
                 tools.append(tools_map[t])
-        fs = FilesService(AI_FILE_DIR / str(conversation_id))
+        fs = FilesService(get_file_dir(conversation_id))
         fs._ensure_ai_file_dir()
+        metadata = {"auth": auth} if auth else {}
         ai_tools = AIToolsService.create_toolkit_from_openharness_tools(
             tools,
             cwd=fs.FILE_DIR,
-            toolkit_name="tools_ops"
+            toolkit_name="fast3_tools",
+            metadata=metadata
         )
         return [ai_tools]
 

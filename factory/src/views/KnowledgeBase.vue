@@ -8,6 +8,7 @@
           知识库
         </h2>
         <button
+          v-if="canCreate"
           @click="openDatasetModal()"
           class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
           title="新建数据集"
@@ -51,7 +52,7 @@
           </div>
           
           <!-- 操作菜单 -->
-          <div v-if="dataset.can_manage" class="relative" @click.stop>
+          <div v-if="dataset.can_manage && (canUpdate || canDelete)" class="relative" @click.stop>
             <button
               @click="toggleDatasetMenu(dataset.id)"
               class="p-1.5 rounded-lg text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-200 hover:text-slate-600"
@@ -67,19 +68,22 @@
               v-click-outside="closeDatasetMenu"
             >
               <button
+                  v-if="canUpdate"
                   class="w-full text-left px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-2"
                   @click="openDatasetAuthModal(dataset)"
               >
-                <Edit2 :size="14"/>
+                <Shield :size="14"/>
                 权限设置
               </button>
               <button
+                v-if="canUpdate"
                 @click="openDatasetModal(dataset)"
                 class="w-full text-left px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-2"
               >
                 <Edit2 :size="14" /> 重命名
               </button>
               <button
+                v-if="canDelete"
                 @click="confirmDeleteDataset(dataset)"
                 class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
               >
@@ -134,7 +138,7 @@
               >
             </div>
             <button
-                v-if="activeDatasetCanWrite"
+                v-if="activeDatasetCanManage"
               @click="fileInputRef?.click()"
               :disabled="uploading"
               class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed transition-colors shadow-sm shadow-indigo-200 font-medium text-sm"
@@ -173,7 +177,7 @@
             <FileText :size="48" class="mb-4 text-slate-200" />
             <p class="mb-4">暂无文件</p>
             <button
-                v-if="activeDatasetCanWrite"
+                v-if="activeDatasetCanManage"
               @click="fileInputRef?.click()"
               class="text-indigo-600 hover:text-indigo-700 font-medium text-sm flex items-center gap-1"
             >
@@ -215,7 +219,7 @@
                         </div>
                         <span class="text-xs text-slate-500 tabular-nums">{{ getProgressPercent(doc.progress) }}%</span>
                         <button
-                            v-if="activeDatasetCanWrite"
+                            v-if="activeDatasetCanManage"
                           @click="stopParsingDocuments(doc)"
                           :disabled="isStoppingDoc(doc.id)"
                           class="px-2 py-0.5 text-xs text-red-600 border border-red-200 rounded hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
@@ -236,18 +240,18 @@
                     <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         @click="openChunkModal(doc)"
-                        class="px-2.5 py-1 text-xs text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-slate-200 hover:border-indigo-200"
-                        title="切片管理"
+                        class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        title="查看切片"
                       >
-                        切片
+                        <Search :size="16" />
                       </button>
                       <button
-                          v-if="activeDatasetCanWrite && doc.run !== 'RUNNING'"
+                          v-if="activeDatasetCanManage && doc.run !== 'RUNNING'"
                         @click="parseDocuments(doc)"
                         class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                        title="重新解析"
+                        title="开始解析"
                       >
-                        <RefreshCw :size="16" />
+                        <Play :size="16" />
                       </button>
                       <button
                         @click="handleDownload(doc)"
@@ -257,7 +261,7 @@
                         <Download :size="16" />
                       </button>
                       <button
-                          v-if="activeDatasetCanWrite"
+                          v-if="activeDatasetCanManage"
                         @click="openRenameDocModal(doc)"
                         class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                         title="重命名"
@@ -265,7 +269,7 @@
                         <Edit2 :size="16" />
                       </button>
                       <button
-                          v-if="activeDatasetCanWrite"
+                          v-if="activeDatasetCanManage"
                         @click="confirmDeleteDoc(doc)"
                         class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="删除"
@@ -480,7 +484,7 @@
       <div class="bg-white rounded-2xl shadow-xl w-full max-w-6xl h-[85vh] overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 flex-shrink-0">
           <div class="min-w-0">
-            <h3 class="font-bold text-slate-800">Chunk 管理</h3>
+            <h3 class="font-bold text-slate-800">切片管理</h3>
             <p class="text-xs text-slate-500 truncate mt-1">
               文档: {{ chunkManagingDoc?.name || '-' }}
             </p>
@@ -518,13 +522,13 @@
                 刷新列表
               </button>
               <button
-                  v-if="activeDatasetCanWrite"
+                  v-if="activeDatasetCanManage"
                 @click="showChunkAddForm = !showChunkAddForm"
                 :disabled="chunkSaving"
                 class="ml-auto px-4 py-2 border border-indigo-200 text-indigo-600 rounded-lg hover:bg-indigo-50 disabled:opacity-60 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2 transition-colors"
               >
                 <Plus :size="16" />
-                {{ showChunkAddForm ? '收起新增' : '新增 Chunk' }}
+                {{ showChunkAddForm ? '收起新增' : '新增切片' }}
               </button>
             </div>
 
@@ -579,7 +583,7 @@
                   </div>
                   <div class="flex items-center gap-2">
                     <button
-                        v-if="activeDatasetCanWrite"
+                        v-if="activeDatasetCanManage"
                       @click="startEditChunk(chunk)"
                       class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                       title="编辑切片"
@@ -587,7 +591,7 @@
                       <Edit2 :size="16" />
                     </button>
                     <button
-                        v-if="activeDatasetCanWrite"
+                        v-if="activeDatasetCanManage"
                       @click="confirmDeleteChunk(chunk)"
                       class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="删除切片"
@@ -669,10 +673,11 @@ import {
   Folder,
   Loader2,
   MoreVertical,
+  Play,
   Plus,
   Presentation,
-  RefreshCw,
   Search,
+  Shield,
   Trash2,
   UploadCloud,
   X
@@ -681,6 +686,8 @@ import type {DATASET, DOCUMENT} from '@/types/knowledge'
 import DatasetAuthModal from '@/components/common/DatasetAuthModal.vue'
 import {api} from '../services/api'
 import dialog from '@/components/common/dialog'
+import message from '@/components/common/message'
+import {useUserStore} from '@/stores/user'
 
 // 状态
 const datasets = ref<DATASET[]>([])
@@ -707,6 +714,22 @@ const renameDocForm = ref({ name: '' })
 const showRetrieveModal = ref(false)
 const docsPollingTimer = ref<number | null>(null)
 const stoppingDocIds = ref<Record<string, boolean>>({})
+
+const PERMS = {
+  create: 'module_ai:ai_ragflow:create',
+  update: 'module_ai:ai_ragflow:update',
+  delete: 'module_ai:ai_ragflow:delete',
+} as const
+
+const userStore = useUserStore()
+const currentUser = computed(() => userStore.userInfo)
+const isAdmin = computed(() => currentUser.value?.is_superuser || false)
+const userPerms = computed(() => userStore.prems || [])
+const hasWildcardPerm = computed(() => userPerms.value.includes('*:*:*'))
+const hasPerm = (perm: string) => isAdmin.value || hasWildcardPerm.value || userPerms.value.includes(perm)
+const canCreate = computed(() => hasPerm(PERMS.create))
+const canUpdate = computed(() => hasPerm(PERMS.update))
+const canDelete = computed(() => hasPerm(PERMS.delete))
 
 type CHUNK_ITEM = {
   id: string;
@@ -748,6 +771,7 @@ const fileInputRef = ref<HTMLInputElement | null>(null)
 // 计算属性
 const activeDataset = computed(() => datasets.value.find(d => d.id === activeDatasetId.value))
 const activeDatasetCanWrite = computed(() => Boolean(activeDataset.value?.can_write))
+const activeDatasetCanManage = computed(() => activeDatasetCanWrite.value && canUpdate.value)
 const activeDatasetRightLabel = computed(() => activeDataset.value?.current_right === 2 ? '读写权限' : '只读权限')
 const activeDatasetRightClass = computed(() => (
     activeDataset.value?.current_right === 2
@@ -1151,7 +1175,7 @@ const fetchChunks = async () => {
 }
 
 const addChunk = async () => {
-  if (!activeDatasetId.value || !chunkManagingDoc.value || !activeDatasetCanWrite.value) return
+  if (!activeDatasetId.value || !chunkManagingDoc.value || !activeDatasetCanManage.value) return
   const content = chunkAddForm.value.content.trim()
   if (!content) return
 
@@ -1177,7 +1201,7 @@ const addChunk = async () => {
 }
 
 const startEditChunk = (chunk: CHUNK_ITEM) => {
-  if (!activeDatasetCanWrite.value) return
+  if (!activeDatasetCanManage.value) return
   editingChunkId.value = chunk.id
   editingChunkContent.value = chunk.content || ''
 }
@@ -1188,7 +1212,7 @@ const cancelEditChunk = () => {
 }
 
 const saveChunkEdit = async () => {
-  if (!activeDatasetId.value || !chunkManagingDoc.value || !editingChunkId.value || !activeDatasetCanWrite.value) return
+  if (!activeDatasetId.value || !chunkManagingDoc.value || !editingChunkId.value || !activeDatasetCanManage.value) return
   const content = editingChunkContent.value.trim()
   if (!content) return
 
@@ -1210,7 +1234,7 @@ const saveChunkEdit = async () => {
 }
 
 const confirmDeleteChunk = async (chunk: CHUNK_ITEM) => {
-  if (!activeDatasetId.value || !chunkManagingDoc.value || !activeDatasetCanWrite.value) return
+  if (!activeDatasetId.value || !chunkManagingDoc.value || !activeDatasetCanManage.value) return
   try {
     await dialog.confirm(`确定要删除切片 "${chunk.id}" 吗？`)
     await api.knowledge.deleteChunks(activeDatasetId.value, chunkManagingDoc.value.id, {
@@ -1284,7 +1308,15 @@ const closeDatasetMenu = () => {
 }
 
 const openDatasetModal = (dataset?: DATASET) => {
-  if (dataset && !dataset.can_manage) return
+  if (dataset) {
+    if (!dataset.can_manage || !canUpdate.value) {
+      message.warning('暂无修改权限，请联系管理员开通')
+      return
+    }
+  } else if (!canCreate.value) {
+    message.warning('暂无创建权限，请联系管理员开通')
+    return
+  }
   closeDatasetMenu()
   editingDataset.value = dataset || null
   datasetForm.value = {
@@ -1301,7 +1333,10 @@ const closeDatasetModal = () => {
 }
 
 const openDatasetAuthModal = (dataset: DATASET) => {
-  if (!dataset.can_manage) return
+  if (!dataset.can_manage || !canUpdate.value) {
+    message.warning('暂无修改权限，请联系管理员开通')
+    return
+  }
   closeDatasetMenu()
   authEditingDataset.value = dataset
   showDatasetAuthModal.value = true
@@ -1318,6 +1353,14 @@ const handleDatasetAuthSaved = async () => {
 }
 
 const saveDataset = async () => {
+  if (editingDataset.value && !canUpdate.value) {
+    message.warning('暂无修改权限，请联系管理员开通')
+    return
+  }
+  if (!editingDataset.value && !canCreate.value) {
+    message.warning('暂无创建权限，请联系管理员开通')
+    return
+  }
   modalLoading.value = true
   try {
     const name = datasetForm.value.name.trim()
@@ -1346,7 +1389,10 @@ const saveDataset = async () => {
 }
 
 const confirmDeleteDataset = async (dataset: DATASET) => {
-  if (!dataset.can_manage) return
+  if (!dataset.can_manage || !canDelete.value) {
+    message.warning('暂无删除权限，请联系管理员开通')
+    return
+  }
   closeDatasetMenu()
   try {
     await dialog.confirm(`确定要删除数据集 "${dataset.name}" 吗？此操作不可恢复。`)
@@ -1410,7 +1456,7 @@ const ensureDocsPolling = () => {
 const handleUpload = async (event: Event) => {
   const input = event.target as HTMLInputElement
   const files = input.files
-  if (!files || files.length === 0 || !activeDatasetId.value || !activeDatasetCanWrite.value) return
+  if (!files || files.length === 0 || !activeDatasetId.value || !activeDatasetCanManage.value) return
   
   uploading.value = true
   const formData = new FormData()
@@ -1433,7 +1479,7 @@ const handleUpload = async (event: Event) => {
 }
 
 const parseDocuments = async (doc: DOCUMENT) => {
-  if (!activeDatasetId.value || !activeDatasetCanWrite.value) return
+  if (!activeDatasetId.value || !activeDatasetCanManage.value) return
   try {
     // 假设 parseDocuments 接受 document_ids 数组
     await api.knowledge.parseDocuments(activeDatasetId.value, { document_ids: [doc.id] })
@@ -1447,7 +1493,7 @@ const parseDocuments = async (doc: DOCUMENT) => {
 const isStoppingDoc = (docId: string) => Boolean(stoppingDocIds.value[docId])
 
 const stopParsingDocuments = async (doc: DOCUMENT) => {
-  if (!activeDatasetId.value || !activeDatasetCanWrite.value || isStoppingDoc(doc.id)) return
+  if (!activeDatasetId.value || !activeDatasetCanManage.value || isStoppingDoc(doc.id)) return
   stoppingDocIds.value = { ...stoppingDocIds.value, [doc.id]: true }
   try {
     const res = await api.knowledge.stopParsingDocuments(activeDatasetId.value, { document_ids: [doc.id] })
@@ -1486,7 +1532,7 @@ const handleDownload = async (doc: DOCUMENT) => {
 }
 
 const openRenameDocModal = (doc: DOCUMENT) => {
-  if (!activeDatasetCanWrite.value) return
+  if (!activeDatasetCanManage.value) return
   editingDoc.value = doc
   renameDocForm.value = { name: doc.name || '' }
   showRenameDocModal.value = true
@@ -1499,7 +1545,7 @@ const closeRenameDocModal = () => {
 }
 
 const saveRenameDoc = async () => {
-  if (!editingDoc.value || !activeDatasetId.value || !activeDatasetCanWrite.value) return
+  if (!editingDoc.value || !activeDatasetId.value || !activeDatasetCanManage.value) return
   modalLoading.value = true
   try {
     await api.knowledge.updateDocument(activeDatasetId.value, editingDoc.value.id, {
@@ -1517,7 +1563,7 @@ const saveRenameDoc = async () => {
 }
 
 const confirmDeleteDoc = async (doc: DOCUMENT) => {
-  if (!activeDatasetId.value || !activeDatasetCanWrite.value) return
+  if (!activeDatasetId.value || !activeDatasetCanManage.value) return
   try {
     await dialog.confirm(`确定要删除文档 "${doc.name}" 吗？`)
     

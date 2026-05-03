@@ -161,7 +161,6 @@ async def offline_ai_agent_controller(
 
 
 @AiAgentRouter.post("/{id}/clone", summary="克隆 ai_agent", description="克隆 ai_agent")
-@AiAgentRouter.post("/{id}/fork", summary="fork ai_agent", description="fork ai_agent")
 async def clone_ai_agent_controller(
     id: int = Path(..., description="ID"),
     auth: AuthSchema = Depends(AuthPermission(check_data_scope=False))

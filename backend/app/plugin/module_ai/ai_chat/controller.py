@@ -216,7 +216,7 @@ async def chat_completions(
         file_markdowns=file_markdowns,
     )
     system_prompt = data.system_prompt or ""
-    enabled_mcp_tool_ids: list[int] = []
+    external_tools: list[str] = []
     active_skills: list[str] = []
     internal_tools: list[str] = []
     knowledge_dataset_ids: list[str] = []
@@ -230,7 +230,7 @@ async def chat_completions(
         if agent_prompt:
             system_prompt = agent_prompt
         mcp_config = AiChatService.extract_agent_mcp_config(agent_detail)
-        enabled_mcp_tool_ids = AiChatService._deduplicate_int_list(mcp_config.get("enabledMcpToolIds"))
+        external_tools = AiChatService._deduplicate_str_list(mcp_config.get("externalTools"))
         active_skills = AiChatService._deduplicate_str_list(mcp_config.get("activeSkills"))
         internal_tools = AiChatService._deduplicate_str_list(mcp_config.get("internalTools"))
         knowledge_dataset_ids = AiChatService.extract_agent_knowledge_dataset_ids(agent_detail)
@@ -242,11 +242,13 @@ async def chat_completions(
         model=data.model,
     )
     api_key = decrypt_aisaas_api_key(provider_info.get("apiKey"))
-    mcp_configs = await AiChatService.get_enabled_mcp_configs(auth=auth, ids=enabled_mcp_tool_ids)
+    mcp_configs = await AiChatService.get_enabled_mcp_configs(auth=auth, names=external_tools)
     mcp_configs = AiChatService.append_builtin_knowledge_mcp_config(
         mcp_configs=mcp_configs,
         knowledge_dataset_ids=knowledge_dataset_ids,
     )
+
+    print(mcp_configs, active_skills, internal_tools)
 
     client = AgnoProvider(
         provider=data.provider,
@@ -280,6 +282,7 @@ async def chat_completions(
                     authorization=request.headers.get("Authorization"),
                     mcp_extra_headers=mcp_extra_headers,
                     response_schema=data.response_schema.model_dump(exclude_none=True) if data.response_schema else None,
+                    auth=auth,
             ):
                 if not payload:
                     continue

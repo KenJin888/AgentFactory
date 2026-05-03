@@ -33,11 +33,11 @@ export class McpChatApiService {
               settings.systemPrompt = agentSystemPrompt
             }
 
-            // Merge enabledMcpToolIds
-            const agentTools = config.mcp?.enabledMcpToolIds || []
-            if(agentTools){
-              settings.enabledMcpToolIds = Array.from(agentTools)
-            }
+            // Merge externalTools
+            const agentTools = (config.mcp?.externalTools || [])
+              .filter((item: unknown): item is string => typeof item === 'string' && item.trim().length > 0)
+              .map((item: string) => item.trim())
+            settings.externalTools = Array.from(new Set(agentTools))
             
             // Merge activeSkills
             const agentSkills = config.mcp?.activeSkills || []
@@ -64,42 +64,41 @@ export class McpChatApiService {
     }
   }
 
-  async getMcpConfigsByIds(ids: number[]): Promise<Array<{ id: number; name: string; config: any }> | null> {
-    const uniqueIds = Array.from(
-        new Set(
-            (ids || [])
-                .map(id => Number(id))
-                .filter((id) => Number.isInteger(id) && id > 0)
-        )
+  async getMcpConfigsByNames(names: string[]): Promise<Array<{ id: number; name: string; config: any }> | null> {
+    const uniqueNames = Array.from(
+      new Set(
+        (names || [])
+          .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+          .map(item => item.trim())
+      )
     )
-    if (uniqueIds.length === 0) return null
+    if (uniqueNames.length === 0) return null
 
     const results: Array<{ id: number; name: string; config: any }> = []
-
-    for (const id of uniqueIds) {
-      try {
-        const res = await AiMcpAPI.detailAiMcp(id)
-        const target = res.data?.data
-        if (!target) continue
-
+    try {
+      const res = await AiMcpAPI.listAiMcp({
+        page_no: 1,
+        page_size: 200,
+        status: '0'
+      })
+      const allItems = res.data?.data?.items || []
+      const targetItems = allItems.filter(item => item.name && uniqueNames.includes(item.name))
+      for (const target of targetItems) {
         let parsedConfig: any = null
         if (target.config) {
           try {
             parsedConfig = JSON.parse(target.config)
           } catch (error) {
-            console.error(`Failed to parse MCP config: ${id}`, error)
+            console.error(`Failed to parse MCP config: ${target.name || target.id}`, error)
             continue
           }
         }
-
-        results.push({
-          id,
-          name: target.name || '',
-          config: parsedConfig
-        })
-      } catch (error) {
-        console.error(`Failed to fetch MCP config by id: ${id}`, error)
+        const id = Number(target.id)
+        if (!Number.isInteger(id) || id <= 0) continue
+        results.push({id, name: target.name || '', config: parsedConfig})
       }
+    } catch (error) {
+      console.error('Failed to fetch MCP config list:', error)
     }
 
     return results.length > 0 ? results : null

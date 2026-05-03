@@ -1,5 +1,5 @@
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import {defineConfig, loadEnv} from 'vite';
 import vue from '@vitejs/plugin-vue';
 
 export default defineConfig(({ mode }) => {
@@ -7,6 +7,9 @@ export default defineConfig(({ mode }) => {
     return {
       base: mode === "production" ? "./" : "/",
       plugins: [vue()],
+      build: {
+        assetsInlineLimit: 0,
+      },
       define: {
 
       },

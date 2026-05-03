@@ -77,7 +77,7 @@
 
             <div class="prose prose-slate prose-lg max-w-none">
               <p class="text-slate-700 leading-relaxed mb-10 text-lg">
-                {{ activeItem.description }}
+                {{ activeItem.subtitle }}
               </p>
               
               <div v-if="activeItem.content" class="mb-12 markdown-body !text-base !bg-transparent">
@@ -131,9 +131,9 @@
         <div class="p-6">
           <div class="flex flex-col items-center text-center mb-6">
             <div class="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-900/50 overflow-hidden">
-              <img src="@/assets/logo.png" alt="StarCityAI" class="w-20 h-20 object-contain" />
+              <img src="@/assets/logo.png" alt="AgnetFactory" class="w-20 h-20 object-contain" />
             </div>
-            <h3 class="text-lg font-bold text-slate-900">StarCityAI</h3>
+            <h3 class="text-lg font-bold text-slate-900">AgnetFactory</h3>
             <p class="text-sm text-slate-500 mt-1">版本 v0.5.6</p>
           </div>
           <div class="space-y-4 text-sm text-slate-600 leading-relaxed">
@@ -152,7 +152,7 @@
                 </li>
                 <li class="flex justify-between items-center">
                   <span class="text-slate-500">版权所有</span>
-                  <span class="font-medium text-slate-700">&copy; 2026 StarCityAI</span>
+                  <span class="font-medium text-slate-700">&copy; 2026 AgnetFactory</span>
                 </li>
               </ul>
             </div>

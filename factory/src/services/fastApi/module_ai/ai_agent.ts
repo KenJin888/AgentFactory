@@ -225,7 +225,7 @@ export type AiAgentConfig = {
 export type AiAgentMcpConfig = {
   activeSkills?: string[],
   internalTools?: string[],
-  externalTools?: string[], // MCP工具名称列表
+  externalTools?: string[],
   knowledge?: KnowledgeItem[],
 }
 

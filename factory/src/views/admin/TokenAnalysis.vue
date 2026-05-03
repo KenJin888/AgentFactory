@@ -133,6 +133,12 @@
               <span class="text-sm text-slate-400">加载中...</span>
             </div>
           </div>
+          <div v-else-if="tokenTrendData.length === 0" class="h-72 flex items-center justify-center">
+            <div class="flex flex-col items-center gap-3 text-slate-400">
+              <InboxIcon class="w-12 h-12" />
+              <span class="text-sm">暂无数据</span>
+            </div>
+          </div>
           <div v-else ref="tokenTrendChartRef" class="h-72"></div>
         </div>
 
@@ -146,6 +152,12 @@
             <div class="flex flex-col items-center gap-3">
               <div class="w-8 h-8 border-3 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
               <span class="text-sm text-slate-400">加载中...</span>
+            </div>
+          </div>
+          <div v-else-if="chatTrendData.length === 0" class="h-72 flex items-center justify-center">
+            <div class="flex flex-col items-center gap-3 text-slate-400">
+              <InboxIcon class="w-12 h-12" />
+              <span class="text-sm">暂无数据</span>
             </div>
           </div>
           <div v-else ref="chatTrendChartRef" class="h-72"></div>
@@ -163,6 +175,12 @@
               <span class="text-sm text-slate-400">加载中...</span>
             </div>
           </div>
+          <div v-else-if="deptRankData.length === 0" class="h-72 flex items-center justify-center">
+            <div class="flex flex-col items-center gap-3 text-slate-400">
+              <InboxIcon class="w-12 h-12" />
+              <span class="text-sm">暂无数据</span>
+            </div>
+          </div>
           <div v-else ref="deptRankChartRef" class="h-72"></div>
         </div>
 
@@ -176,6 +194,12 @@
             <div class="flex flex-col items-center gap-3">
               <div class="w-8 h-8 border-3 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
               <span class="text-sm text-slate-400">加载中...</span>
+            </div>
+          </div>
+          <div v-else-if="userRankData.length === 0" class="h-72 flex items-center justify-center">
+            <div class="flex flex-col items-center gap-3 text-slate-400">
+              <InboxIcon class="w-12 h-12" />
+              <span class="text-sm">暂无数据</span>
             </div>
           </div>
           <div v-else ref="userRankChartRef" class="h-72"></div>
@@ -193,6 +217,12 @@
               <span class="text-sm text-slate-400">加载中...</span>
             </div>
           </div>
+          <div v-else-if="modelConsumptionData.length === 0" class="h-72 flex items-center justify-center">
+            <div class="flex flex-col items-center gap-3 text-slate-400">
+              <InboxIcon class="w-12 h-12" />
+              <span class="text-sm">暂无数据</span>
+            </div>
+          </div>
           <div v-else ref="modelPieChartRef" class="h-72"></div>
         </div>
 
@@ -206,6 +236,12 @@
             <div class="flex flex-col items-center gap-3">
               <div class="w-8 h-8 border-3 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
               <span class="text-sm text-slate-400">加载中...</span>
+            </div>
+          </div>
+          <div v-else-if="agentRankData.length === 0" class="h-72 flex items-center justify-center">
+            <div class="flex flex-col items-center gap-3 text-slate-400">
+              <InboxIcon class="w-12 h-12" />
+              <span class="text-sm">暂无数据</span>
             </div>
           </div>
           <div v-else ref="agentRankChartRef" class="h-72"></div>
@@ -286,7 +322,8 @@ import {
   MessageSquareIcon,
   BotIcon,
   UsersIcon,
-  SearchIcon
+  SearchIcon,
+  Inbox as InboxIcon
 } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import * as echarts from 'echarts'
@@ -473,8 +510,7 @@ const loadData = async () => {
     modelConsumptionData.value = modelConsumptionRes.data?.data?.items || []
     detailData.value = detailRes.data?.data?.items || []
 
-    // 渲染图表
-    await nextTick()
+    // 渲染图表 - 使用 setTimeout 确保 DOM 完全渲染后再初始化图表
     setTimeout(() => {
       renderTokenTrendChart()
       renderChatTrendChart()
@@ -494,10 +530,10 @@ const loadData = async () => {
 const renderTokenTrendChart = () => {
   if (!tokenTrendChartRef.value) return
 
-  if (tokenTrendChartInstance) {
-    tokenTrendChartInstance.dispose()
+  // 复用已有实例，避免频繁销毁重建
+  if (!tokenTrendChartInstance) {
+    tokenTrendChartInstance = echarts.init(tokenTrendChartRef.value)
   }
-  tokenTrendChartInstance = echarts.init(tokenTrendChartRef.value)
 
   const dates = tokenTrendData.value.map(item => {
     const date = item.date
@@ -570,10 +606,10 @@ const renderTokenTrendChart = () => {
 const renderChatTrendChart = () => {
   if (!chatTrendChartRef.value) return
 
-  if (chatTrendChartInstance) {
-    chatTrendChartInstance.dispose()
+  // 复用已有实例，避免频繁销毁重建
+  if (!chatTrendChartInstance) {
+    chatTrendChartInstance = echarts.init(chatTrendChartRef.value)
   }
-  chatTrendChartInstance = echarts.init(chatTrendChartRef.value)
 
   const dates = chatTrendData.value.map(item => {
     const date = item.date
@@ -639,10 +675,10 @@ const renderChatTrendChart = () => {
 const renderDeptRankChart = () => {
   if (!deptRankChartRef.value) return
 
-  if (deptRankChartInstance) {
-    deptRankChartInstance.dispose()
+  // 复用已有实例，避免频繁销毁重建
+  if (!deptRankChartInstance) {
+    deptRankChartInstance = echarts.init(deptRankChartRef.value)
   }
-  deptRankChartInstance = echarts.init(deptRankChartRef.value)
 
   const data = deptRankData.value.slice(0, 5).reverse()
   const names = data.map(item => item.dept_name)
@@ -704,10 +740,10 @@ const renderDeptRankChart = () => {
 const renderUserRankChart = () => {
   if (!userRankChartRef.value) return
 
-  if (userRankChartInstance) {
-    userRankChartInstance.dispose()
+  // 复用已有实例，避免频繁销毁重建
+  if (!userRankChartInstance) {
+    userRankChartInstance = echarts.init(userRankChartRef.value)
   }
-  userRankChartInstance = echarts.init(userRankChartRef.value)
 
   const data = userRankData.value.slice(0, 5).reverse()
   const names = data.map(item => item.user_name)
@@ -769,10 +805,10 @@ const renderUserRankChart = () => {
 const renderModelPieChart = () => {
   if (!modelPieChartRef.value) return
 
-  if (modelPieChartInstance) {
-    modelPieChartInstance.dispose()
+  // 复用已有实例，避免频繁销毁重建
+  if (!modelPieChartInstance) {
+    modelPieChartInstance = echarts.init(modelPieChartRef.value)
   }
-  modelPieChartInstance = echarts.init(modelPieChartRef.value)
 
   const colors = ['#f87171', '#10b981', '#6366f1', '#f59e0b', '#8b5cf6', '#ec4899']
   const data = modelConsumptionData.value.map((item, index) => ({
@@ -829,10 +865,10 @@ const renderModelPieChart = () => {
 const renderAgentRankChart = () => {
   if (!agentRankChartRef.value) return
 
-  if (agentRankChartInstance) {
-    agentRankChartInstance.dispose()
+  // 复用已有实例，避免频繁销毁重建
+  if (!agentRankChartInstance) {
+    agentRankChartInstance = echarts.init(agentRankChartRef.value)
   }
-  agentRankChartInstance = echarts.init(agentRankChartRef.value)
 
   const data = agentRankData.value.slice(0, 5)
   const names = data.map(item => item.agent_name)

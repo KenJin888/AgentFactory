@@ -43,7 +43,7 @@
   {
     "config_name": "网站Logo",
     "config_key": "sys_web_logo",
-    "config_value": "/src/assets/logo.png",
+    "config_value": "",
     "config_type": true,
     "status": "0",
     "description": "初始化数据"

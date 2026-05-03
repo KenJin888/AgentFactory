@@ -130,6 +130,7 @@ const AiChatAPI = {
   },
 
   // 核心流式处理方法
+  // 使用 multipart/form-data 上传文件，由后端处理
   async *handleChatCompletion(
     body: AiChatCompletionForm,
     files: File[] = [],
@@ -137,23 +138,29 @@ const AiChatAPI = {
   ): AsyncGenerator<string> {
       const token = Auth.getAccessToken();
       const hasFiles = files.length > 0
+
+      // 构建 FormData
       const formData = new FormData();
+      
+      // 将请求体作为 JSON 字符串放入 body 字段
+      formData.append('body', JSON.stringify(body));
+
+      // 添加文件
       if (hasFiles) {
-          formData.append("body", JSON.stringify(body));
-          files.forEach((file) => {
-              formData.append("files", file);
-          });
+        for (const file of files) {
+          formData.append('files', file, file.name);
+        }
       }
+
       const response = await fetch(
         (import.meta.env.VITE_APP_BASE_API || "") + `${API_PATH}/chat/completions`,
         {
           method: "post",
           signal,
           headers: {
-              ...(!hasFiles ? {"Content-Type": "application/json"} : {}),
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-            body: hasFiles ? formData : JSON.stringify(body),
+          body: formData,
         }
       );
 
@@ -174,7 +181,6 @@ const AiChatAPI = {
         done = readerDone;
         if (value) {
           const chunk = decoder.decode(value, { stream: true });
-          //console.log("Received chunk:", chunk);
           yield chunk;
         }
       }

@@ -3,7 +3,7 @@ name = "backend"
 version = "2.0.0"
 description = "fastapiadmin后端工程"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11,<3.12"
 dependencies = [
     "agno==2.5.8",
     "aiofiles==24.1.0", # 文件操作
@@ -62,6 +62,14 @@ dependencies = [
     "sqlalchemy-pytds>=1.0.2",
     "setenvironment>=2.0.3",
     "python-docx>=1.2.0",
+    "starlette>=0.40.0",
+    "aiomqtt>=2.5.1",
+    "pypdf>=5.0.0",  # PDF解析
+    "mammoth>=1.6.0",  # Word文档解析
+    "markdownify>=0.14.0",  # HTML转Markdown
+    "python-pptx>=1.0.0",  # PowerPoint解析
+    "python-magic>=0.4.27",  # MIME类型检测
+    "xlrd>=2.0.1",  # 旧版Excel(.xls)解析
 ]
 
 [dependency-groups]

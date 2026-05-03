@@ -215,12 +215,12 @@ const props = defineProps<{
 
 const userStore = useUserStore()
 const configStore = useConfigStore()
-const webTitle = computed(() => configStore.getConfigValue('sys_web_title', 'StarCityAI'))
+const webTitle = computed(() => configStore.getConfigValue('sys_web_title', 'AgnetFactory'))
 const webLogo = computed(() => configStore.getConfigValue('sys_web_logo', defaultLogo))
 const webSlogan1 = computed(() => configStore.getConfigValue('sys_web_slogan1', '释放'))
 const webSlogan2 = computed(() => configStore.getConfigValue('sys_web_slogan2', 'AI 生产力'))
 const webDescription = computed(() => configStore.getConfigValue('sys_web_description', '专为智能体设计的企业管理平台'))
-const webCopyright = computed(() => configStore.getConfigValue('sys_web_copyright', '© 2026 StarCityAI'))
+const webCopyright = computed(() => configStore.getConfigValue('sys_web_copyright', '© 2026 AgnetFactory'))
 
 onMounted(async () => {
   await configStore.getConfig()

@@ -45,13 +45,6 @@
                   <Upload :size="16" />
                   从文件导入
                 </button>
-                <button
-                  class="w-full px-4 py-2.5 text-left text-slate-600 hover:bg-slate-50 hover:text-blue-600 font-medium transition-all flex items-center gap-2"
-                  @click="handleSmartCreateClick"
-                >
-                  <Sparkles :size="16" />
-                  智能创建
-                </button>
                 <div class="h-px bg-slate-100 my-1 mx-2"></div>
                 <button
                   class="w-full px-4 py-2.5 text-left text-slate-600 hover:bg-slate-50 hover:text-blue-600 font-medium transition-all flex items-center gap-2"
@@ -271,44 +264,6 @@
       @close="closePublishModal"
       @confirm="handlePublishConfirm"
     />
-
-    <!-- 智能创建弹窗 -->
-    <div v-if="isSmartCreateModalOpen" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h3 class="text-lg font-bold text-slate-800">智能创建</h3>
-          <button @click="isSmartCreateModalOpen = false" class="text-slate-400 hover:text-slate-600 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </button>
-        </div>
-        <div class="p-6">
-          <p class="text-sm text-slate-500 mb-3">请输入您想要智能体需求，例如："一个能帮我写周报的助手，能联网搜索"</p>
-          <textarea
-            v-model="smartCreatePrompt"
-            rows="4"
-            placeholder="描述您的需求..."
-            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-50 focus:border-blue-500 outline-none transition-all resize-none"
-          ></textarea>
-        </div>
-        <div class="px-6 py-4 bg-slate-50 flex justify-end gap-3">
-          <button
-            @click="isSmartCreateModalOpen = false"
-            class="px-5 py-2 text-slate-600 font-medium hover:bg-slate-200 rounded-xl transition-colors"
-          >
-            取消
-          </button>
-          <button
-            @click="handleSmartCreateConfirm"
-            :disabled="!smartCreatePrompt.trim()"
-            :class="['px-5 py-2 font-medium rounded-xl transition-all shadow-sm', smartCreatePrompt.trim() ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-95' : 'bg-blue-300 text-white/80 cursor-not-allowed']"
-          >
-            确认创建
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -655,7 +610,7 @@ interface ImportedAgentConfig {
   config?: {
     mcp?: {
       activeSkills?: string[]
-      enabledMcpToolIds?: number[]
+      externalTools?: string[]
       knowledge?: { name: string; dataset_id: string }[]
     }
     enableSearch?: boolean
@@ -668,11 +623,13 @@ interface ImportedAgentConfig {
   }
 }
 
-const normalizeMcpToolIds = (value: unknown): number[] => {
+const normalizeExternalTools = (value: unknown): string[] => {
   if (!Array.isArray(value)) return []
-  return value
-      .map(item => Number(item))
-      .filter(item => Number.isInteger(item) && item > 0)
+  return Array.from(new Set(
+    value
+      .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+      .map(item => item.trim())
+  ))
 }
 
 const handleFileSelect = async (event: Event) => {
@@ -696,7 +653,7 @@ const handleFileSelect = async (event: Event) => {
     const config = {
       mcp: {
         activeSkills: importedData.config?.mcp?.activeSkills || [],
-        enabledMcpToolIds: normalizeMcpToolIds(importedData.config?.mcp?.enabledMcpToolIds),
+        externalTools: normalizeExternalTools(importedData.config?.mcp?.externalTools),
         knowledge: importedData.config?.mcp?.knowledge || []
       },
       enableSearch: importedData.config?.enableSearch ?? false,

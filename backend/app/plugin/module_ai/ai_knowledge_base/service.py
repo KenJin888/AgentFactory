@@ -265,3 +265,10 @@ class FilesService:
             raise CustomException(msg="文件不存在")
 
         return str(target_path), target_path.name
+
+
+def get_file_dir(conversation_id, file_dir=AI_FILE_DIR):
+    import hashlib
+    text = str(conversation_id)
+    hash_hex_one_shot = hashlib.sha256(text.encode()).hexdigest()
+    return file_dir / hash_hex_one_shot
